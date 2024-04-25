@@ -1,5 +1,8 @@
 # Preceding Note Blocker
 
+MIDI effect supporting VST3 and CLAP.  
+This plug-in does not allow re-triggering when a MIDI note is being played and there is a note-on of the same MIDI note. This is not musical, but may be useful in some specific use cases.  
+
 ## Building
 
 After installing [Rust](https://rustup.rs/), you can compile Preceding Note Blocker as follows:
