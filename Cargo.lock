@@ -475,7 +475,7 @@ checksum = "439ee305def115ba05938db6eb1644ff94165c5ab5e9420d1c1bcedbba909391"
 
 [[package]]
 name = "preceding_note_blocker"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "nih_plug",
 ]
