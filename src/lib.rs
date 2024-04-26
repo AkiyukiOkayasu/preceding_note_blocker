@@ -1,16 +1,12 @@
 use nih_plug::prelude::*;
 use std::sync::Arc;
 
-// This is a shortened version of the gain example with most comments removed, check out
-// https://github.com/robbert-vdh/nih-plug/blob/master/plugins/examples/gain/src/lib.rs to get
-// started
-
 struct PrecedingNoteBlocker {
     params: Arc<PrecedingNoteBlockerParams>,
     midi_note_states: [[bool; 128]; 16],
 }
 
-#[derive(Params)]
+#[derive(Default, Params)]
 struct PrecedingNoteBlockerParams {}
 
 impl Default for PrecedingNoteBlocker {
@@ -19,12 +15,6 @@ impl Default for PrecedingNoteBlocker {
             params: Arc::new(PrecedingNoteBlockerParams::default()),
             midi_note_states: [[false; 128]; 16],
         }
-    }
-}
-
-impl Default for PrecedingNoteBlockerParams {
-    fn default() -> Self {
-        Self {}
     }
 }
 
@@ -101,9 +91,9 @@ impl Plugin for PrecedingNoteBlocker {
                             context.send_event(NoteEvent::NoteOn {
                                 timing,
                                 voice_id,
-                                channel: channel,
-                                note: note,
-                                velocity: velocity,
+                                channel,
+                                note,
+                                velocity,
                             })
                         }
                     } else {
@@ -112,9 +102,9 @@ impl Plugin for PrecedingNoteBlocker {
                         context.send_event(NoteEvent::NoteOff {
                             timing,
                             voice_id,
-                            channel: channel,
-                            note: note,
-                            velocity: velocity,
+                            channel,
+                            note,
+                            velocity,
                         })
                     }
                 }
