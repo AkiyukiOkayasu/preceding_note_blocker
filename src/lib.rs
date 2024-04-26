@@ -7,6 +7,7 @@ use std::sync::Arc;
 
 struct PrecedingNoteBlocker {
     params: Arc<PrecedingNoteBlockerParams>,
+    midi_note_states: [[bool; 128]; 16],
 }
 
 #[derive(Params)]
@@ -16,6 +17,7 @@ impl Default for PrecedingNoteBlocker {
     fn default() -> Self {
         Self {
             params: Arc::new(PrecedingNoteBlockerParams::default()),
+            midi_note_states: [[false; 128]; 16],
         }
     }
 }
@@ -69,6 +71,13 @@ impl Plugin for PrecedingNoteBlocker {
     fn reset(&mut self) {
         // Reset buffers and envelopes here. This can be called from the audio thread and may not
         // allocate. You can remove this function if you do not need it.
+
+        // Reset all note states
+        for channel in self.midi_note_states.iter_mut() {
+            for note_state in channel.iter_mut() {
+                *note_state = false;
+            }
+        }
     }
 
     fn process(
@@ -85,13 +94,30 @@ impl Plugin for PrecedingNoteBlocker {
                     channel,
                     note,
                     velocity,
-                } => context.send_event(NoteEvent::NoteOn {
-                    timing,
-                    voice_id,
-                    channel: 15 - channel,
-                    note: 127 - note,
-                    velocity: 1.0 - velocity,
-                }),
+                } => {
+                    if velocity > 0.0f32 {
+                        // note-on
+                        if check_set_note_state(channel, note, &mut self.midi_note_states) {
+                            context.send_event(NoteEvent::NoteOn {
+                                timing,
+                                voice_id,
+                                channel: channel,
+                                note: note,
+                                velocity: velocity,
+                            })
+                        }
+                    } else {
+                        // note-off
+                        off_note_state(channel, note, &mut self.midi_note_states);
+                        context.send_event(NoteEvent::NoteOff {
+                            timing,
+                            voice_id,
+                            channel: channel,
+                            note: note,
+                            velocity: velocity,
+                        })
+                    }
+                }
                 NoteEvent::NoteOff {
                     timing,
                     voice_id,
@@ -110,6 +136,33 @@ impl Plugin for PrecedingNoteBlocker {
         }
         ProcessStatus::Normal
     }
+}
+
+/// ノート管理の状態をチェックし、ノートオンを許可するかどうかを返す
+///
+/// # Arguments
+/// * `channel` - MIDIチャンネル番号
+/// * `note` - MIDIノート番号
+/// * `note_state` - ノート管理の状態
+///
+/// # Returns
+/// * `bool` - ノートオンを許可する場合はtrue、それ以外はfalse
+fn check_set_note_state(channel: u8, note: u8, note_state: &mut [[bool; 128]; 16]) -> bool {
+    let state = note_state[channel as usize][note as usize];
+    note_state[channel as usize][note as usize] = true;
+
+    // すでにtrueがセットされているときはノートonを許可しない
+    !state
+}
+
+/// ノート管理の状態をリセットする
+///
+/// # Arguments
+/// * `channel` - MIDIチャンネル番号
+/// * `note` - MIDIノート番号
+/// * `note_state` - ノート管理の状態
+fn off_note_state(channel: u8, note: u8, note_state: &mut [[bool; 128]; 16]) {
+    note_state[channel as usize][note as usize] = false;
 }
 
 impl ClapPlugin for PrecedingNoteBlocker {
