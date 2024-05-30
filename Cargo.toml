@@ -1,6 +1,6 @@
 [package]
 name = "preceding_note_blocker"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2021"
 authors = ["Akiyuki Okayasu <akiyuki.okayasu@gmail.com>"]
 license = "GPL-3.0-or-later"
