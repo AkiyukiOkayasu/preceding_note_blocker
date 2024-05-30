@@ -114,13 +114,16 @@ impl Plugin for PrecedingNoteBlocker {
                     channel,
                     note,
                     velocity,
-                } => context.send_event(NoteEvent::NoteOff {
-                    timing,
-                    voice_id,
-                    channel: 15 - channel,
-                    note: 127 - note,
-                    velocity: 1.0 - velocity,
-                }),
+                } => {
+                    off_note_state(channel, note, &mut self.midi_note_states);
+                    context.send_event(NoteEvent::NoteOff {
+                        timing,
+                        voice_id,
+                        channel,
+                        note,
+                        velocity,
+                    })
+                }
                 _ => (),
             }
         }
